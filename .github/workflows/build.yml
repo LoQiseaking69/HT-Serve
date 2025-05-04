@@ -32,6 +32,12 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: twine upload dist/* || echo "Already uploaded"
 
+      - name: Upload site artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-pages
+          path: ht_serve/testsite
+
   deploy-gh-pages:
     name: Deploy Demo Site to GitHub Pages
     runs-on: ubuntu-latest
@@ -40,17 +46,8 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
-
-      - name: Upload test site
-        uses: actions/upload-pages-artifact@v1
-        with:
-          path: ht_serve/testsite
-          name: github-pages
-
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v3
+        with:
+          artifact_name: github-pages
