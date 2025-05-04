@@ -1,0 +1,42 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+env:
+  SITE_PATH: ht_serve/testsite
+
+jobs:
+  deploy-pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Validate site folder
+        run: |
+          set -e
+          echo "[CHECK] Verifying site path $SITE_PATH"
+          test -f "$SITE_PATH/index.html" || (echo "::error::Missing index.html in $SITE_PATH" && exit 1)
+
+      - name: Upload GitHub Pages Artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: ${{ env.SITE_PATH }}
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
