@@ -50,3 +50,16 @@ jobs:
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
+
+  archive-artifact:
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Archive Built Dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-archive
+          path: dist/
