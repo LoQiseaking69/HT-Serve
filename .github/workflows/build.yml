@@ -1,4 +1,4 @@
-name: Build and Publish
+name: Secure Build + PyPI Publish + GitHub Pages Deploy
 
 on:
   push:
@@ -12,46 +12,75 @@ permissions:
   pages: write
   id-token: write
 
+env:
+  PYTHON_VERSION: '3.10'
+  DIST_PATH: dist
+  SITE_PATH: ht_serve/testsite
+
 jobs:
-  build-and-deploy:
+  build-publish-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
+      - name: HARD FAIL if upload-artifact@v3 is detected
+        run: |
+          echo "[SECURITY CHECK] Scanning for deprecated actions..."
+          if grep -r "upload-artifact@v3" .github/; then
+            echo "::error file=.github::Detected forbidden usage of deprecated upload-artifact@v3"
+            exit 1
+          fi
+
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
-      - name: Set up Python
+      - name: Setup Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
 
-      - name: Install Build Tools
+      - name: Install Build Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install build twine
+          pip install build twine wheel
 
-      - name: Build Package
+      - name: Build Python Package
         run: python -m build
 
-      - name: Upload Build Artifact
+      - name: Validate Built Distributions
+        run: |
+          echo "[INFO] Checking contents of dist/"
+          ls -lh ${{ env.DIST_PATH }}
+          [ -f ${{ env.DIST_PATH }}/$(ls ${{ env.DIST_PATH }} | head -n1) ] || exit 1
+
+      - name: Upload dist/ Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dist-archive
-          path: dist/
+          name: pypi-distribution
+          path: ${{ env.DIST_PATH }}
 
-      - name: Publish to PyPI
+      - name: Publish to PyPI (if token available)
+        if: ${{ secrets.PYPI_API_TOKEN != '' }}
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        run: twine upload dist/* || echo "Already uploaded"
+        run: twine upload ${{ env.DIST_PATH }}/* || echo "Already published or skipped."
 
-      - name: Set up GitHub Pages
+      - name: Setup GitHub Pages
         uses: actions/configure-pages@v4
+
+      - name: Verify Test Site Exists
+        run: |
+          echo "[INFO] Checking site path ${{ env.SITE_PATH }}"
+          [ -f ${{ env.SITE_PATH }}/index.html ] || (echo "::error::Missing index.html in ${{ env.SITE_PATH }}" && exit 1)
 
       - name: Upload GitHub Pages Artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          path: ht_serve/testsite
+          path: ${{ env.SITE_PATH }}
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
