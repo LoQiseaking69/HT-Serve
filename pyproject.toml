@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ht-serve"
-version = "0.0.1"
+version = "0.0.2"
 description = "A secure HTTPS live reload server for front-end prototyping and dashboard development"
 authors = [
   { name = "HermiTech Labs" }
