@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="ht-serve",
-    version="0.0.1",
+    version="0.0.2",
     description="Secure HTTPS live reload server for UI/dashboard development",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
