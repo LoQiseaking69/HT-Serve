@@ -42,20 +42,17 @@ jobs:
 
       - name: Install Build Tools
         run: |
-          set -e
           python -m pip install --upgrade pip
           pip install build twine wheel
 
       - name: Build Python Package
         run: |
-          set -e
           python -m build
           echo "[INFO] Built files:"
           ls -lh $DIST_PATH
 
       - name: Validate dist/ Exists
         run: |
-          set -e
           test -d "$DIST_PATH" || (echo "::error::dist folder missing" && exit 1)
           test "$(find $DIST_PATH -type f | wc -l)" -gt 0 || (echo "::error::No files in dist/" && exit 1)
 
@@ -71,7 +68,6 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          set -e
           FILES=$(find $DIST_PATH -type f)
           if [ -n "$FILES" ]; then
             twine upload $FILES || (echo "::error::Upload failed" && exit 1)
